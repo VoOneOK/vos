@@ -1,8 +1,12 @@
 {
     "name": "vos",
     "version": "1.1.0",
-    "main": "main.js",
-    "author": "VoOne Bobanov",
-    "license": "ISC",
-    "description": "VOS - programming language you need"
+    "type": "module",
+    "main": "src/main.ts",
+    "author": "VoOne Ivanov",
+    "license": "MPL-2.0",
+    "description": "VOS - programming language you need",
+    "devDependencies": {
+        "@types/node": "^26.1.2"
+    }
 }

@@ -18,6 +18,7 @@ VOS - VoOneScript (sorry, I'm a bit selfish)
 - shouting lexer and parser
 
 See full syntax [here](./docs/en/FULL_SYNTAX.md)
+
 Star it to not lose and get new update 👍👍👍
 
 ## How I can use it?

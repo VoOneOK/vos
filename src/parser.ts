@@ -66,7 +66,6 @@ class Parser {
     }
 
     parseStatement() {
-        console.log(this.peek(), this.check("identifier"))
         if (this.match("identifier")) {
             if (this.check("operator") && this.peek().getAsString() === "(") {
                 this.parseFunctionCall()

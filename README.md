@@ -1,45 +1,32 @@
-# VOS - programming language you need
+# VOS
 
-Major updates coming, readme hasn't been updated yet
+Programming language made on ideas, those appeared at 3 am.
 
 ## Why it exist?
 
-Idk, I just randomly started making it
+Possibilities of programming languages aren't that endless. If you will ever need something no language provide, you can feel free to contribute and make this language as heavy as **WE ALL** need.
 
-## What does "vos" stands for?
+## What does "VOS" stands for?
 
-vos - VoOneScript
+VOS - VoOneScript (sorry, I'm a bit selfish)
 
-VoOne is one of my nicknames
+## What are the special possibilities of VOS
 
-And by the way vos sound like voice a little bit and I and my friend like call voice like this, so when I realized that VoOneScript is "VOS", I immediately picked this name
+- use imaginary unit in numbers
+- square root negative numbers
+- add, subtract, multiply and divide complex numbers
+- shouting lexer and parser
 
-## What are the possibilities of vos
-
-If I don't forget to change this, it is version 1.1.0 (I haven't forgotten yet)
-
-Now you can do much more than in 1.0.0:
-
-- create and read variables
-- init and call functions
-- use built-in print function to output things
-- add, subtract, multiply and divide
-- concat strings
-- see beauty of lexer and parser
-
+See full syntax [here](./docs/en/FULL_SYNTAX.md)
 Star it to not lose and get new update 👍👍👍
 
 ## How I can use it?
 
-Easily.
+Coming soon...
 
-- Install node.js
+## Contribution
 
-- Download this repository
-
-- Type in cmd "**node main.js_location your_vos_file**" (you can find example script.vos in repository)
-
-- Remember you can always add space and "true" like this: "node main.js script.vos **true**" to see some logs with tokens and parsing
+See contribution guidelines [here](./docs/en/CONTRIBUTION.md)
 
 ## License
 

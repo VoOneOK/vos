@@ -1,4 +1,4 @@
-# Full syntax for VOS
+# Full syntax of VOS
 
 ## Comments
 

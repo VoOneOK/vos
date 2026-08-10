@@ -3,8 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { colors } from "./colors.ts"
-import { getGcd, roundTo } from "./numbers.ts"
+import { colors } from "./utils/colors.ts"
+import { getGcd, roundTo } from "./utils/numbers.ts"
 import Parser from "./parser.ts"
 import { EOFToken, type Token } from "./tokens.ts"
 import type { ValueType, Variable } from "./types.ts"

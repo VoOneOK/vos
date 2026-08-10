@@ -12,7 +12,7 @@ const MANGO_LIMIT = 25
 builtIns.set(
     "print",
     new NativeFunctionValue((value: Value) => {
-        value.print()
+        if (value) value.print()
         return new NahValue()
     }),
 )

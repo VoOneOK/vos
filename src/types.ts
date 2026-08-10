@@ -1,3 +1,7 @@
+declare global {
+    var code: string
+}
+
 import type { BooleanValue, NumberValue, StringValue, Value } from "./values"
 
 export type Variable = { builtin: boolean; value: Value }

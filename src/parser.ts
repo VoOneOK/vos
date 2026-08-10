@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { EOFToken, NumberToken, OperatorToken, StringToken, Token, ValuableToken } from "./tokens.ts"
+import { EOFToken, IdentifierToken, NumberToken, OperatorToken, StringToken, Token, ValuableToken } from "./tokens.ts"
 import {
     type Expression,
     type ExpressionOperator,
@@ -66,6 +66,7 @@ class Parser {
     }
 
     parseStatement() {
+        console.log(this.peek(), this.check("identifier"))
         if (this.match("identifier")) {
             if (this.check("operator") && this.peek().getAsString() === "(") {
                 this.parseFunctionCall()
@@ -77,7 +78,7 @@ class Parser {
         } else if (this.fullMatch("keyword", "return")) {
             this.parseReturn()
         } else {
-            throw this.error(`Expected variable assignment or function call`)
+            this.error(`You probably did something wrong`)
         }
     }
 
@@ -166,6 +167,7 @@ class Parser {
 
         const bodyTokens = []
         let braceCount = 1
+        let ending = 0
 
         while (braceCount > 0 && !this.isAtEnd()) {
             const token = this.advance()
@@ -173,6 +175,7 @@ class Parser {
                 braceCount++
             } else if (token.type === "operator" && token.getAsString() === "}") {
                 braceCount--
+                ending = token.codePosition
             }
             if (braceCount > 0) {
                 bodyTokens.push(token)
@@ -185,7 +188,7 @@ class Parser {
 
         this.variables.set(functionName, {
             builtin: false,
-            value: new FunctionValue(bodyTokens, params),
+            value: new FunctionValue(bodyTokens, params, ending),
         })
     }
 
@@ -317,9 +320,21 @@ class Parser {
     // Helpers
     error(message: string) {
         const token = this.peek()
-        return new Error(
-            `${message} at position ${this.position + this.positionOffset}. Current token is ${token.getAsString()} (${token.type})`,
-        )
+        let lineStart = token.codePosition
+        let lineEnd = token.codePosition
+        while (global.code[lineStart] !== "\n" && lineStart > 0) {
+            lineStart--
+        }
+        while (global.code[lineEnd] !== "\n" && lineEnd < global.code.length) {
+            lineEnd++
+        }
+
+        console.log("❌ Parser error")
+        console.log("❌ " + global.code.substring(lineStart, lineEnd).trim())
+        console.log("❌ " + " ".repeat(token.codePosition - lineStart - 1) + "^")
+        console.log("❌ " + message)
+
+        process.exit(1)
     }
 
     consume(type: TokenType, expectedValue: string, message: string) {

@@ -8,16 +8,18 @@ import { BooleanValue, NumberValue, StringValue, Value } from "./values.ts"
 
 export abstract class Token {
     type: TokenType
-    protected constructor(type: TokenType) {
+    codePosition: number
+    protected constructor(type: TokenType, codePosition: number) {
         this.type = type
+        this.codePosition = codePosition
     }
 
     public abstract getAsString(): string
 }
 
 export abstract class ValuableToken extends Token {
-    protected constructor(type: ValuableTokenType) {
-        super(type)
+    protected constructor(type: ValuableTokenType, codePosition: number) {
+        super(type, codePosition)
     }
 
     public abstract getAsValue(): Value
@@ -27,8 +29,8 @@ export class NumberToken extends ValuableToken {
     normalPart: number
     imaginaryPart: boolean
 
-    constructor(normalPart: number, imaginaryPart: boolean = false) {
-        super("number")
+    constructor(codePosition: number, normalPart: number, imaginaryPart: boolean = false) {
+        super("number", codePosition)
         this.normalPart = normalPart
         this.imaginaryPart = imaginaryPart
     }
@@ -45,8 +47,8 @@ export class NumberToken extends ValuableToken {
 export class StringToken extends ValuableToken {
     value: string
 
-    constructor(value: string) {
-        super("string")
+    constructor(codePosition: number, value: string) {
+        super("string", codePosition)
         this.value = value
     }
 
@@ -62,8 +64,8 @@ export class StringToken extends ValuableToken {
 export class BooleanToken extends ValuableToken {
     value: boolean
 
-    constructor(value: boolean) {
-        super("boolean")
+    constructor(codePosition: number, value: boolean) {
+        super("boolean", codePosition)
         this.value = value
     }
 
@@ -80,8 +82,8 @@ export class BooleanToken extends ValuableToken {
 export class OperatorToken extends Token {
     operator: Operator
 
-    constructor(operator: Operator) {
-        super("operator")
+    constructor(codePosition: number, operator: Operator) {
+        super("operator", codePosition)
         this.operator = operator
     }
 
@@ -93,8 +95,8 @@ export class OperatorToken extends Token {
 export class KeywordToken extends Token {
     keyword: string
 
-    constructor(keyword: string) {
-        super("keyword")
+    constructor(codePosition: number, keyword: string) {
+        super("keyword", codePosition)
         this.keyword = keyword
     }
 
@@ -106,8 +108,8 @@ export class KeywordToken extends Token {
 export class IdentifierToken extends Token {
     identifier: string
 
-    constructor(identifier: string) {
-        super("identifier")
+    constructor(codePosition: number, identifier: string) {
+        super("identifier", codePosition)
         this.identifier = identifier
     }
 
@@ -117,8 +119,8 @@ export class IdentifierToken extends Token {
 }
 
 export class EOFToken extends Token {
-    constructor() {
-        super("eof")
+    constructor(codePosition: number) {
+        super("eof", codePosition)
     }
 
     public getAsString() {

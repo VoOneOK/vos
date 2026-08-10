@@ -29,7 +29,7 @@ class Lexer {
     identifierRegex: RegExp
 
     constructor(code: string) {
-        this.code = code
+        this.code = code.trim()
         this.position = 0
         this.tokens = []
         this.operators = [
@@ -75,12 +75,10 @@ class Lexer {
             // Operators
             const twoChar = this.code.substr(this.position, 2) as Operator
             if (this.operators.includes(twoChar)) {
-                this.tokens.push(new OperatorToken(twoChar))
-                this.position += 2
+                this.tokens.push(new OperatorToken((this.position += 2), twoChar))
                 continue
             } else if (this.operators.includes(char as Operator)) {
-                this.tokens.push(new OperatorToken(char as Operator))
-                this.position++
+                this.tokens.push(new OperatorToken(this.position++, char as Operator))
                 continue
             }
 
@@ -114,10 +112,10 @@ class Lexer {
             }
 
             // Unrecognized character
-            throw new Error(`Unexpected character '${char}' at position ${this.position}`)
+            this.error(`IDK what is this: "${char}"`)
         }
 
-        this.tokens.push(new EOFToken())
+        this.tokens.push(new EOFToken(this.position))
 
         return this.tokens
     }
@@ -141,15 +139,15 @@ class Lexer {
             const isPoint = char === "."
 
             if ((isDigit || isPoint) && imaginaryUnit) {
-                throw new Error(
-                    `You didn't quite get it... ${char} is a normal digit in ${value + char}, but normal digits goes before imaginary unit. Please follow rules or imaginary unit will follow you!`,
+                this.error(
+                    `You didn't quite get it... "${char}" is a normal digit, but normal digits goes before imaginary unit. Please follow rules or imaginary unit will follow you!`,
                 )
             } else if (isDigit) {
                 value += char
                 this.position++
             } else if (isPoint && isFloat) {
-                throw new Error(
-                    `Why ${value + char} has TWO points (dots or whatever you call it)? Not enough floativeness, huh? Use double then`,
+                this.error(
+                    `Why it has TWO points (dots or whatever you call it)? Not enough floativeness, huh? Use double then`,
                 )
             } else if (isPoint) {
                 isFloat = true
@@ -157,30 +155,24 @@ class Lexer {
                 this.position++
             } else if (char === "i") {
                 if (this.code[this.position - 1] === ".") {
-                    throw new Error(`Reminder: i in ${value + char} isn't a good fractional part`)
+                    this.error(`Reminder: i isn't a good fractional part`)
                 } else if (!imaginaryUnit) {
                     imaginaryUnit = true
                     this.position++
                 } else if (imaginaryUnit) {
-                    throw new Error(
-                        `WHY WOULD YOU NEED TWO i's IN ${value}ii? It is i^2 if you didn't know. Don't be sad tho`,
-                    )
+                    this.error(`WHY WOULD YOU NEED TWO i's? It is -1 if you didn't know. Don't be sad tho`)
                 }
             } else if (char === "I") {
-                throw new Error(
-                    `WHAT EVEN IS ${char} IN ${value + char}? Are you crazy?! It is i - such a good imaginary number`,
-                )
+                this.error(`WHAT EVEN IS I? Are you crazy?! It is i - such a good imaginary unit`)
             } else if (/[a-z]/i.test(char)) {
-                throw new Error(
-                    `IT WAS SUPPOSED TO BE A NUMBER. ${char} in ${value + char} is a letter! Tho you can add i at the end (imaginary unit: i^2 = -1)`,
-                )
+                this.error(`IT WAS SUPPOSED TO BE A NUMBER. "${char}" is a letter!`)
             } else {
                 break
             }
         }
 
         const normalPart = isFloat ? parseFloat(value) : parseInt(value, 10)
-        this.tokens.push(new NumberToken(normalPart, imaginaryUnit))
+        this.tokens.push(new NumberToken(this.position, normalPart, imaginaryUnit))
     }
 
     tokenizeString() {
@@ -194,22 +186,20 @@ class Lexer {
         }
 
         if (this.position >= this.code.length) {
-            throw new Error("Unterminated string literal")
+            this.error("You didn't finish the string! This is BAD!")
         }
 
         this.position++ // skip closing quote
 
-        this.tokens.push(new StringToken(value))
+        this.tokens.push(new StringToken(this.position, value))
     }
 
     tryTokenizeBoolean() {
         if (this.code.slice(this.position, this.position + 4) === "true") {
-            this.tokens.push(new BooleanToken(true))
-            this.position += 4
+            this.tokens.push(new BooleanToken((this.position += 4), true))
             return true
         } else if (this.code.slice(this.position, this.position + 5) === "false") {
-            this.tokens.push(new BooleanToken(false))
-            this.position += 5
+            this.tokens.push(new BooleanToken((this.position += 5), false))
             return true
         }
         return false
@@ -223,8 +213,7 @@ class Lexer {
                 this.code.slice(this.position, this.position + length) === keyword &&
                 !/[a-z\d]/i.test(this.code[this.position + length])
             ) {
-                this.tokens.push(new KeywordToken(keyword))
-                this.position += length
+                this.tokens.push(new KeywordToken((this.position += length), keyword))
                 return true
             }
         }
@@ -240,7 +229,25 @@ class Lexer {
             this.position++
         }
 
-        this.tokens.push(new IdentifierToken(identifier))
+        this.tokens.push(new IdentifierToken(this.position, identifier))
+    }
+
+    error(message: string) {
+        let lineStart = this.position
+        let lineEnd = this.position
+        while (this.code[lineStart] !== "\n" && lineStart > 0) {
+            lineStart--
+        }
+        while (this.code[lineEnd] !== "\n" && lineEnd < this.code.length) {
+            lineEnd++
+        }
+
+        console.log("❌ Lexer error")
+        console.log("❌ " + this.code.substring(lineStart, lineEnd).trim())
+        console.log("❌ " + " ".repeat(this.position - lineStart - 1) + "^")
+        console.log("❌ " + message)
+
+        process.exit(1)
     }
 }
 

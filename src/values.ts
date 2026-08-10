@@ -318,11 +318,11 @@ export class FunctionValue extends Value {
     private body: Token[]
     private params: string[]
 
-    constructor(body: Token[], params: string[]) {
+    constructor(body: Token[], params: string[], ending: number) {
         super("function")
 
         this.body = body
-        this.body.push(new EOFToken())
+        this.body.push(new EOFToken(ending))
         this.params = params
     }
 

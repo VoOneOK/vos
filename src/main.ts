@@ -24,7 +24,7 @@ function runScript() {
             path.join(import.meta.dirname, vosFile)
         }
 
-        const code = fs.readFileSync(vosFilePath, "utf-8")
+        global.code = fs.readFileSync(vosFilePath, "utf-8")
 
         const lexer = new Lexer(code)
         const tokens = lexer.tokenize()

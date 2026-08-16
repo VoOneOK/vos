@@ -7,7 +7,7 @@ import { colors } from "./utils/colors.ts"
 import { getGcd, roundTo } from "./utils/numbers.ts"
 import Parser from "./parser.ts"
 import { EOFToken, type Token } from "./tokens.ts"
-import type { ValueType, Variable } from "./types.ts"
+import type { Numberish, ValueType, Variable } from "./types.ts"
 
 const PRECISION_LIMIT = 6
 
@@ -49,68 +49,6 @@ export class NumberValue extends Value {
     public print() {
         console.log(colors.yellow(this.getAsString()))
     }
-
-    public addNumber(secondValue: NumberValue | ComplexNumberValue | number): NumberValue | ComplexNumberValue {
-        if (secondValue instanceof ComplexNumberValue) return secondValue.addNumber(this)
-
-        const secondNumber = secondValue instanceof NumberValue ? secondValue.normalPart : secondValue
-        const secondImaginaryUnit = secondValue instanceof NumberValue ? secondValue.imaginaryUnit : false
-
-        if (this.imaginaryUnit !== secondImaginaryUnit) {
-            return new ComplexNumberValue(
-                this.imaginaryUnit ? secondNumber : this.normalPart,
-                this.imaginaryUnit ? this.normalPart : secondNumber,
-            )
-        }
-
-        return new NumberValue(this.normalPart + secondNumber, this.imaginaryUnit)
-    }
-
-    public subtractNumber(secondValue: NumberValue | ComplexNumberValue | number) {
-        if (secondValue instanceof ComplexNumberValue) return secondValue.subtractNumber(this)
-        return this.addNumber(secondValue instanceof NumberValue ? secondValue.multiplyNumber(-1) : secondValue * -1)
-    }
-
-    public multiplyNumber(secondValue: NumberValue | ComplexNumberValue | number): NumberValue | ComplexNumberValue {
-        if (secondValue instanceof ComplexNumberValue) return secondValue.multiplyNumber(this)
-        if (!(secondValue instanceof NumberValue)) {
-            return new NumberValue(this.normalPart * secondValue, this.imaginaryUnit)
-        }
-
-        return new NumberValue(
-            this.normalPart * secondValue.normalPart * (this.imaginaryUnit && secondValue.imaginaryUnit ? -1 : 1),
-            this.imaginaryUnit !== secondValue.imaginaryUnit,
-        )
-    }
-
-    public divideNumber(secondValue: NumberValue | ComplexNumberValue | number): NumberValue | ComplexNumberValue {
-        if (secondValue instanceof ComplexNumberValue) return this.divideByComplexNumber(secondValue)
-        const secondNumber = secondValue instanceof NumberValue ? secondValue.normalPart : secondValue
-        const secondImaginaryUnit = secondValue instanceof NumberValue ? secondValue.imaginaryUnit : false
-
-        if (this.imaginaryUnit === secondImaginaryUnit) {
-            return new NumberValue(this.normalPart / secondNumber, false)
-        } else if (this.imaginaryUnit) {
-            return new NumberValue(this.normalPart / secondNumber, true)
-        }
-
-        return new NumberValue(-1 * (this.normalPart / secondNumber), true)
-    }
-
-    public divideByComplexNumber(secondValue: ComplexNumberValue): NumberValue | ComplexNumberValue {
-        // Math break
-        // (a + bi) / (c + di) = ((ac + bd) / (c^2 + d^2)) + ((bc - ad) / (c^2 + d^2))i
-        const a = this.imaginaryUnit ? 0 : this.normalPart
-        const b = this.imaginaryUnit ? this.normalPart : 0
-        const c = secondValue.real
-        const d = secondValue.imag
-
-        const newReal = (a * c + b * d) / (c * c + d * d)
-        const newImag = (b * c - a * d) / (c * c + d * d)
-
-        if (newImag === 0) return new NumberValue(newReal, false)
-        return new ComplexNumberValue(newReal, newImag)
-    }
 }
 
 export class ComplexNumberValue extends Value {
@@ -144,101 +82,40 @@ export class ComplexNumberValue extends Value {
     public print() {
         console.log(colors.yellow(this.getAsString()))
     }
+}
 
-    public addNumber(secondValue: ComplexNumberValue | NumberValue | number): NumberValue | ComplexNumberValue {
-        if (secondValue instanceof ComplexNumberValue) {
-            const newReal = this.real + secondValue.real
-            const newImag = this.imag + secondValue.imag
+export class InfinityValue extends Value {
+    grade: 1 | 2 | 3
+    positive: boolean
 
-            if (newImag === 0) return new NumberValue(newReal, false)
+    constructor(grade: 1 | 2 | 3, positive: boolean = true) {
+        super("infinity")
 
-            return new ComplexNumberValue(newReal, newImag)
-        } else if (secondValue instanceof NumberValue) {
-            const newReal = secondValue.imaginaryUnit ? this.real : this.real + secondValue.normalPart
-            const newImag = secondValue.imaginaryUnit ? this.imag + secondValue.normalPart : this.imag
+        this.grade = grade
+        this.positive = positive
+    }
 
-            if (newImag === 0) return new NumberValue(newReal, false)
-
-            return new ComplexNumberValue(newReal, newImag)
-        } else {
-            return new ComplexNumberValue(this.real + secondValue, this.imag)
+    getAsString() {
+        switch (this.grade) {
+            case 1:
+                return this.positive ? "Infinity" : "Debt"
+            case 2:
+                return this.positive ? "Bigger infinity" : "Bigger Debt"
+            case 3:
+                return this.positive ? "Biggest infinity" : "Biggest Debt"
         }
     }
 
-    public subtractNumber(secondValue: ComplexNumberValue | NumberValue | number) {
-        if (secondValue instanceof ComplexNumberValue) {
-            const newReal = this.real - secondValue.real
-            const newImag = this.imag - secondValue.imag
-
-            if (newImag === 0) return new NumberValue(newReal, false)
-
-            return new ComplexNumberValue(newReal, newImag)
-        } else if (secondValue instanceof NumberValue) {
-            const newReal = secondValue.imaginaryUnit ? this.real : this.real - secondValue.normalPart
-            const newImag = secondValue.imaginaryUnit ? this.imag - secondValue.normalPart : this.imag
-
-            if (newImag === 0) return new NumberValue(newReal, false)
-
-            return new ComplexNumberValue(newReal, newImag)
-        } else {
-            return new ComplexNumberValue(this.real - secondValue, this.imag)
-        }
+    getAsBoolean() {
+        return this.positive
     }
 
-    public multiplyNumber(secondValue: ComplexNumberValue | NumberValue | number): NumberValue | ComplexNumberValue {
-        // Math break
-        // (a + bi) * (c + di) = ac + adi + bci - bd
-        // real = ac - bd; imag = adi + bci
-
-        const a = this.real
-        const b = this.imag
-        let c
-        let d
-
-        if (secondValue instanceof ComplexNumberValue) {
-            c = secondValue.real
-            d = secondValue.imag
-        } else if (secondValue instanceof NumberValue) {
-            c = secondValue.imaginaryUnit ? 0 : secondValue.normalPart
-            d = secondValue.imaginaryUnit ? secondValue.normalPart : 0
-        } else {
-            c = secondValue
-            d = 0
-        }
-
-        const newReal = a * c - b * d
-        const newImag = a * d + b * c
-
-        if (newImag === 0) return new NumberValue(newReal, false)
-        if (newReal === 0) return new NumberValue(newImag, true)
-        return new ComplexNumberValue(newReal, newImag)
+    getAsNative() {
+        return this.positive ? Infinity : -Infinity
     }
 
-    public divideNumber(secondValue: ComplexNumberValue | NumberValue | number): NumberValue | ComplexNumberValue {
-        // Math break
-        // (a + bi) / (c + di) = ((ac + bd) / (c^2 + d^2)) + ((bc - ad) / (c^2 + d^2))i
-        const a = this.real
-        const b = this.imag
-        let c
-        let d
-
-        if (secondValue instanceof ComplexNumberValue) {
-            c = secondValue.real
-            d = secondValue.imag
-        } else if (secondValue instanceof NumberValue) {
-            c = secondValue.imaginaryUnit ? 0 : secondValue.normalPart
-            d = secondValue.imaginaryUnit ? secondValue.normalPart : 0
-        } else {
-            c = secondValue
-            d = 0
-        }
-
-        const newReal = (a * c + b * d) / (c * c + d * d)
-        const newImag = (b * c - a * d) / (c * c + d * d)
-
-        if (newImag === 0) return new NumberValue(newReal, false)
-        if (newReal === 0) return new NumberValue(newImag, true)
-        return new ComplexNumberValue(newReal, newImag)
+    print() {
+        console.log(colors.yellow(this.getAsString()))
     }
 }
 

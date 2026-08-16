@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { EOFToken, IdentifierToken, NumberToken, OperatorToken, StringToken, Token, ValuableToken } from "./tokens.ts"
+import { OperatorToken, Token, ValuableToken } from "./tokens.ts"
 import {
     type Expression,
     type ExpressionOperator,
@@ -13,16 +13,8 @@ import {
     type ValueType,
     type Variable,
 } from "./types.ts"
-import {
-    BooleanValue,
-    ComplexNumberValue,
-    FunctionValue,
-    NahValue,
-    NativeFunctionValue,
-    NumberValue,
-    StringValue,
-    type Value,
-} from "./values.ts"
+import { operations } from "./utils/operations.ts"
+import { FunctionValue, NahValue, NativeFunctionValue, StringValue, type Value } from "./values.ts"
 
 const PRECEDENCE: Partial<Record<Operator, number>> = {
     "*": 4,
@@ -55,7 +47,15 @@ class Parser {
         this.variables = builtInVariables
         this.valueToReturn = null
 
-        this.VALUE_TYPES = ["number", "string", "boolean", "function", "nativeFunction"] as const
+        this.VALUE_TYPES = [
+            "number",
+            "complexNumber",
+            "infinity",
+            "string",
+            "boolean",
+            "function",
+            "nativeFunction",
+        ] as const
     }
 
     parse(): Value {
@@ -285,33 +285,22 @@ class Parser {
     evaluateExpression(expression: Expression): Value {
         // @ts-expect-error shut up. I am checking, and you don't like it, so i don't like you
         if (this.VALUE_TYPES.includes(expression.type)) return expression.value
-        if (expression.type !== "binary") throw this.error("IDK what you tried to do")
+        if (expression.type !== "binary") throw this.error("IDK what you tried to do, value unsupported")
 
         const left = this.evaluateExpression(expression.left)
         const right = this.evaluateExpression(expression.right)
 
         const concatenation =
             (left instanceof StringValue || right instanceof StringValue) && expression.operator === "+"
-        const mathOperator = ["+", "-", "*", "/"].includes(expression.operator)
-        const mathOperation =
-            (left instanceof NumberValue || left instanceof ComplexNumberValue) &&
-            (right instanceof NumberValue || right instanceof ComplexNumberValue) &&
-            mathOperator
 
         if (concatenation) {
             return new StringValue(left.getAsString() + right.getAsString())
-        } else if (mathOperation) {
-            switch (expression.operator) {
-                case "+":
-                    return left.addNumber(right)
-                case "-":
-                    return left.subtractNumber(right)
-                case "*":
-                    return left.multiplyNumber(right)
-                case "/":
-                    return left.divideNumber(right)
-            }
-        } else {
+        }
+
+        try {
+            // @ts-expect-error dirty trick that works
+            return operations[expression.operator][left.type][right.type](left, right)
+        } catch (error) {
             return new NahValue()
         }
     }

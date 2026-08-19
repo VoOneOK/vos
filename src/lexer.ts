@@ -20,6 +20,7 @@ class Lexer {
     position: number
     tokens: Token[]
     operators: Operator[]
+    longestOperator: number
 
     keywords: string[]
     nwords: string[]
@@ -34,6 +35,12 @@ class Lexer {
         this.tokens = []
         this.operators = [
             // ! Multi-character first
+            "nand",
+            "and",
+            "xor",
+            "nor",
+            "or",
+            "!",
             "=",
             "+",
             "-",
@@ -45,6 +52,7 @@ class Lexer {
             "}",
             ",",
         ]
+        this.longestOperator = this.operators[0].length
 
         this.keywords = ["fun", "return"]
 
@@ -57,7 +65,7 @@ class Lexer {
     }
 
     tokenize() {
-        while (this.position < this.code.length) {
+        mainLoop: while (this.position < this.code.length) {
             const char = this.code[this.position]
 
             // Whitespaces
@@ -73,13 +81,12 @@ class Lexer {
             }
 
             // Operators
-            const twoChar = this.code.substr(this.position, 2) as Operator
-            if (this.operators.includes(twoChar)) {
-                this.tokens.push(new OperatorToken((this.position += 2), twoChar))
-                continue
-            } else if (this.operators.includes(char as Operator)) {
-                this.tokens.push(new OperatorToken(this.position++, char as Operator))
-                continue
+            for (let i = this.longestOperator; i > 0; i--) {
+                const candidate = this.code.substr(this.position, i) as Operator
+                if (this.operators.includes(candidate)) {
+                    this.tokens.push(new OperatorToken((this.position += i), candidate))
+                    continue mainLoop
+                }
             }
 
             // Numbers

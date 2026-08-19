@@ -1,10 +1,10 @@
 // As much as you want to reuse code here, you maybe should avoid that.
 // Otherwise it will get really confusing soon
 
-import type { ExpressionOperator, ValueType } from "../types.ts"
-import { ComplexNumberValue, InfinityValue, NumberValue, StringValue } from "../values.ts"
+import type { ExpressionOperator, UnaryOperator, ValueType } from "../types.ts"
+import { BooleanValue, ComplexNumberValue, InfinityValue, NumberValue, StringValue, Value } from "../values.ts"
 
-type Operation = Record<ExpressionOperator, Partial<Record<ValueType, Partial<Record<ValueType, Function>>>>>
+type Operation = Partial<Record<ExpressionOperator, Partial<Record<ValueType, Partial<Record<ValueType, Function>>>>>>
 export const operations: Operation = {
     "+": {
         number: {
@@ -74,6 +74,18 @@ export const operations: Operation = {
             infinity: divInfinities,
         },
     },
+}
+
+export const booleanOperations: Partial<Record<ExpressionOperator, Function>> = {
+    and: andBooleans,
+    nand: nandBooleans,
+    or: orBooleans,
+    xor: xorBooleans,
+    nor: norBooleans,
+}
+
+export const unaryOperations: Record<UnaryOperator, Function> = {
+    "!": notBoolean,
 }
 
 function returnComplex(newReal: number, newImag: number) {
@@ -374,4 +386,28 @@ function divInfinities(a: InfinityValue, b: InfinityValue) {
     }
 
     return new NumberValue(Math.pow(gradeDifference, 2) * m)
+}
+
+function andBooleans(a: Value, b: Value) {
+    return new BooleanValue(a.getAsBoolean() && b.getAsBoolean())
+}
+
+function nandBooleans(a: Value, b: Value) {
+    return new BooleanValue(!(a.getAsBoolean() && b.getAsBoolean()))
+}
+
+function orBooleans(a: Value, b: Value) {
+    return new BooleanValue(a.getAsBoolean() || b.getAsBoolean())
+}
+
+function xorBooleans(a: Value, b: Value) {
+    return new BooleanValue(a.getAsBoolean() !== b.getAsBoolean())
+}
+
+function norBooleans(a: Value, b: Value) {
+    return new BooleanValue(!(a.getAsBoolean() || b.getAsBoolean()))
+}
+
+function notBoolean(a: Value) {
+    return new BooleanValue(!a.getAsBoolean())
 }

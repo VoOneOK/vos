@@ -9,19 +9,24 @@ import {
     type ExpressionOperator,
     type Operator,
     type TokenType,
+    type UnaryOperator,
     type ValuableTokenType,
     type ValueType,
     type Variable,
 } from "./types.ts"
-import { operations } from "./utils/operations.ts"
+import { booleanOperations, operations, unaryOperations } from "./utils/operations.ts"
 import { FunctionValue, NahValue, NativeFunctionValue, StringValue, type Value } from "./values.ts"
 
-const PRECEDENCE: Partial<Record<Operator, number>> = {
+const PRECEDENCE: Record<ExpressionOperator, number> = {
+    and: 2,
+    nand: 2,
+    or: 2,
+    xor: 2,
+    nor: 2,
     "*": 4,
     "/": 4,
     "+": 3,
     "-": 3,
-    "=": 2,
 }
 
 class Parser {
@@ -31,6 +36,8 @@ class Parser {
     private variables: Map<string, Variable>
     private valueToReturn: Value | null
     private VALUE_TYPES: ValueType[]
+    private UNARY_OPERATORS: UnaryOperator[]
+    private BOOLEAN_OPERATORS: ExpressionOperator[]
 
     constructor(tokens: Token[], toplevel: boolean, builtInVariables: Map<string, Variable> = new Map()) {
         this.tokens = tokens
@@ -49,6 +56,11 @@ class Parser {
             "function",
             "nativeFunction",
         ] as const
+
+        this.UNARY_OPERATORS = ["!"] as const
+
+        // @ts-expect-error
+        this.BOOLEAN_OPERATORS = Object.keys(booleanOperations) as const
     }
 
     parse(): Value {
@@ -223,7 +235,7 @@ class Parser {
             const operator = this.peek() as OperatorToken
             if (operator.type !== "operator") break
 
-            const operatorValue = operator.getAsString()
+            const operatorValue = operator.getAsString() as ExpressionOperator
             const precedence = PRECEDENCE[operatorValue]
 
             if (!precedence) break
@@ -235,7 +247,7 @@ class Parser {
 
             left = {
                 type: "binary",
-                operator: operatorValue as ExpressionOperator,
+                operator: operatorValue,
                 left,
                 right,
             }
@@ -267,10 +279,25 @@ class Parser {
             if (!varValue || !varValue.value) throw this.error(`${varName} not found. LOCK IN!`)
             return { type: varValue.value.type, value: varValue.value }
         }
-        if (this.match("operator") && this.previous().getAsString() === "(") {
-            const expression = this.parseExpression()
-            this.consume("operator", ")", "Expressions love to be finished ig. Add )")
-            return expression
+        if (this.check("operator")) {
+            const operator = this.peek().getAsString()
+
+            if (operator === "(") {
+                this.advance()
+                const expression = this.parseExpression()
+                this.consume("operator", ")", "Expressions love to be finished ig. Add )")
+                return expression
+            }
+
+            // @ts-expect-error
+            if (this.UNARY_OPERATORS.includes(operator)) {
+                this.advance()
+                return {
+                    type: "unary",
+                    value: this.parsePrimaryExpression(),
+                    operator: operator as UnaryOperator,
+                }
+            }
         }
         throw this.error("Expected primary expression. LOCK IN!")
     }
@@ -278,24 +305,33 @@ class Parser {
     evaluateExpression(expression: Expression): Value {
         // @ts-expect-error shut up. I am checking, and you don't like it, so i don't like you
         if (this.VALUE_TYPES.includes(expression.type)) return expression.value
-        if (expression.type !== "binary") throw this.error("IDK what you tried to do, value unsupported")
 
-        const left = this.evaluateExpression(expression.left)
-        const right = this.evaluateExpression(expression.right)
-
-        const concatenation =
-            (left instanceof StringValue || right instanceof StringValue) && expression.operator === "+"
-
-        if (concatenation) {
-            return new StringValue(left.getAsString() + right.getAsString())
+        if (expression.type === "unary") {
+            const value = this.evaluateExpression(expression.value)
+            return unaryOperations[expression.operator](value)
         }
 
-        try {
-            // @ts-expect-error dirty trick that works
-            return operations[expression.operator][left.type][right.type](left, right)
-        } catch (error) {
-            return new NahValue()
+        if (expression.type === "binary") {
+            const left = this.evaluateExpression(expression.left)
+            const right = this.evaluateExpression(expression.right)
+
+            const concatenation =
+                (left instanceof StringValue || right instanceof StringValue) && expression.operator === "+"
+            const booleanOperation = this.BOOLEAN_OPERATORS.includes(expression.operator)
+
+            // dirty trick that works
+            try {
+                if (concatenation) return new StringValue(left.getAsString() + right.getAsString())
+                // @ts-expect-error
+                if (booleanOperation) return booleanOperations[expression.operator](left, right)
+                // @ts-expect-error
+                return operations[expression.operator][left.type][right.type](left, right)
+            } catch (error) {
+                return new NahValue()
+            }
         }
+
+        throw this.error("IDK what you tried to do, value unsupported")
     }
 
     // Helpers

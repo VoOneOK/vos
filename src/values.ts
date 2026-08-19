@@ -225,8 +225,8 @@ export class FunctionValue extends Value {
         return this.params
     }
 
-    public call(variables: Map<string, Variable>, positionOffset: number): Value {
-        const parser = new Parser(this.body, false, variables, positionOffset)
+    public call(variables: Map<string, Variable>): Value {
+        const parser = new Parser(this.body, false, variables)
         return parser.parse()
     }
 }

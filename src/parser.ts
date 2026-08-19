@@ -29,20 +29,13 @@ class Parser {
     private toplevel: boolean
     private position: number
     private variables: Map<string, Variable>
-    private positionOffset: number
     private valueToReturn: Value | null
     private VALUE_TYPES: ValueType[]
 
-    constructor(
-        tokens: Token[],
-        toplevel: boolean,
-        builtInVariables: Map<string, Variable> = new Map(),
-        positionOffset: number = 0,
-    ) {
+    constructor(tokens: Token[], toplevel: boolean, builtInVariables: Map<string, Variable> = new Map()) {
         this.tokens = tokens
         this.toplevel = toplevel
         this.position = 0
-        this.positionOffset = positionOffset
 
         this.variables = builtInVariables
         this.valueToReturn = null
@@ -129,7 +122,7 @@ class Parser {
                 })
             }
 
-            return functionValue.call(functionVariables, this.position)
+            return functionValue.call(functionVariables)
         }
     }
 

@@ -96,7 +96,7 @@ function returnComplex(newReal: number, newImag: number) {
 
 function addNumbers(a: NumberValue, b: NumberValue) {
     if (a.imaginaryUnit !== b.imaginaryUnit) {
-        return new ComplexNumberValue(
+        return returnComplex(
             a.imaginaryUnit ? b.normalPart : a.normalPart,
             a.imaginaryUnit ? a.normalPart : b.normalPart,
         )
@@ -162,7 +162,7 @@ function addInfinities(a: InfinityValue, b: InfinityValue) {
 
 function subNumbers(a: NumberValue, b: NumberValue) {
     if (a.imaginaryUnit !== b.imaginaryUnit) {
-        return new ComplexNumberValue(
+        return returnComplex(
             a.imaginaryUnit ? b.normalPart : a.normalPart,
             a.imaginaryUnit ? a.normalPart : b.normalPart,
         )

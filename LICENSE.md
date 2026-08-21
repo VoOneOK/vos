@@ -153,6 +153,6 @@ This Source Code Form is “Incompatible With Secondary Licenses”, as defined 
 
 ## Special Exception for main.js
 
-The file `main.js` is exempt from the fork attribution requirement.
+The file `main.ts` is exempt from the fork attribution requirement.
 Modifications to this file alone do not constitute creating a fork
 under this license. All other files remain subject to standard terms.

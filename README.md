@@ -38,5 +38,5 @@ of any modifications.
 
 ### Modification Policy
 
-- You may freely modify `main.js` without needing to mark your project as a fork
+- You may freely modify `main.ts` without needing to mark your project as a fork
 - Changes to any other files constitute a fork and require attribution

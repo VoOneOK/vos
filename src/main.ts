@@ -1,5 +1,5 @@
 /*
- * This file (main.js) may be freely modified without creating
+ * This file (main.ts) may be freely modified without creating
  * a derivative work or fork under this project's license.
  * All other files remain subject to the standard license terms.
  */
